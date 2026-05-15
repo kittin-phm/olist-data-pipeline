@@ -1,0 +1,7 @@
+data/
+*.csv
+*.zip
+__pycache__/
+.vscode/
+*.json
+.gcloud/
