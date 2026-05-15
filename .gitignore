@@ -1,7 +1,4 @@
-data/
-*.csv
-*.zip
-__pycache__/
-.vscode/
-*.json
-.gcloud/
+_pycache__/
+*.pyc
+*.pyo
+
