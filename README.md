@@ -1,7 +1,7 @@
 # Olist E-Commerce Data Pipeline
 
 ## Project Structure
-- `pipeline/` - Prefect ETL pipeline (extract, cast, DQ check, load)
+- `pipelines/` - Prefect ETL pipeline (extract, cast, DQ check, load)
 - `sql/` - BigQuery SQL models (staging, intermediate, mart, KPI views)
 - `bi/` - Power BI dashboard and DAX measures
 
@@ -19,7 +19,7 @@ gcloud auth application-default login
 
 ### 3. Run the pipeline
 ```bash
-py -3.11 pipeline/flow.py
+py -3.11 pipelines/flow.py
 ```
 
 ## BigQuery Dataset
