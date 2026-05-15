@@ -33,3 +33,29 @@ Dataset: `olist_staging`
 
 ## Data Source
 [Brazilian E-Commerce Dataset - Kaggle](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
+
+## Dashboard Preview
+![Dashboard](bi/dashboard.png)
+
+## Dashboard Description
+
+This Power BI dashboard analyzes **Olist Brazilian E-Commerce** transaction data 
+covering the period **September 2016 to August 2018** (~100,000 orders).
+
+### KPI Cards
+- **Total GMV**: 14.21M BRL — total gross merchandise value across all orders
+- **Avg AOV**: 130.72 BRL — average revenue per order
+- **Avg On-Time Rate**: ~86% — percentage of orders delivered on or before estimated date
+
+### Charts
+- **Monthly Revenue (GMV)**: Revenue trend by month — shows peak in late 2017 and gradual decline toward mid-2018
+- **Average Order Value (AOV)**: AOV trend by month — relatively stable around 140-160 BRL throughout the period
+- **On-Time Delivery Rate %**: Consistent delivery performance (~85-90%) across all months with minor fluctuations
+
+### Slicer
+- **year_month filter**: Allows filtering all visuals by specific month for drill-down analysis
+
+### DAX Measures
+- `Total GMV` — SUM of monthly GMV
+- `Avg AOV` — AVERAGE of monthly AOV
+- `Avg Ontime Rate` — AVERAGE of monthly on-time delivery rate
