@@ -1,0 +1,4 @@
+pandas==2.1.4 
+google-cloud-bigquery==3.11.4 
+prefect==2.14.3 
+db-dtypes==1.1.1 
