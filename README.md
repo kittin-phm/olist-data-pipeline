@@ -45,7 +45,7 @@ covering the period **September 2016 to August 2018** (~100,000 orders).
 ### KPI Cards
 - **Total GMV**: 14.21M BRL — total gross merchandise value across all orders
 - **Avg AOV**: 130.72 BRL — average revenue per order
-- **Avg On-Time Rate**: ~86% — percentage of orders delivered on or before estimated date
+- **Avg On-Time Rate**: 106.72% (monthly average of on-time delivery rate)
 
 ### Charts
 - **Monthly Revenue (GMV)**: Revenue trend by month — shows peak in late 2017 and gradual decline toward mid-2018
