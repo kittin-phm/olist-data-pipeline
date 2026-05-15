@@ -7,23 +7,31 @@ SELECT
     o.order_purchase_timestamp,
     o.order_delivered_customer_date,
     o.order_estimated_delivery_date,
-    
+
     -- Items info
     i.product_id,
     i.seller_id,
     i.price,
     i.freight_value,
-    
+
     -- Payment info
     p.payment_type,
     p.payment_value,
-    
-    -- Calculate delivery lead time in days
+
+    -- Delivery lead time in days
     DATE_DIFF(
         DATE(o.order_delivered_customer_date),
         DATE(o.order_purchase_timestamp),
         DAY
-    ) AS delivery_lead_time_days
+    ) AS delivery_lead_time_days,
+
+    -- On-time delivery flag
+    CASE
+        WHEN o.order_status = 'delivered'
+             AND o.order_delivered_customer_date <= o.order_estimated_delivery_date
+        THEN 1
+        ELSE 0
+    END AS is_ontime
 
 FROM `project-839c799e-2b34-4fae-814.olist_staging.stg_orders` o
 LEFT JOIN `project-839c799e-2b34-4fae-814.olist_staging.stg_order_items` i
