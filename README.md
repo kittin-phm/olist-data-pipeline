@@ -22,6 +22,33 @@ Kaggle CSV Files
   DAX Measures → KPI Cards → Time-series Charts
 ```
 
+## Project Structure
+
+```
+olist-data-pipeline/
+├── pipelines/
+│   ├── flow.py               # Prefect @flow — main orchestration
+│   └── tasks/
+│       ├── extract.py        # extract_csv()
+│       ├── cast.py           # cast_orders(), cast_order_items(), cast_payments()
+│       ├── dq_check.py       # dq_check_orders(), dq_check_order_items(), dq_check_payments()
+│       └── load.py           # load_to_bigquery()
+├── sql/
+│   ├── staging/              # stg_orders, stg_order_items, stg_payments
+│   ├── intermediate/         # int_orders_enriched
+│   └── mart/                 # mart_daily_revenue + 3 KPI views
+├── bi/
+│   ├── dashboard.pbix        # Power BI dashboard
+│   ├── dashboard.png         # Dashboard screenshot
+│   └── dax_measures.md       # DAX formulas + explanation
+├── requirements.txt
+└── README.md
+```
+
+## Data Source
+
+[Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) — Kaggle 
+
 ---
 
 ## Part 1 — ETL Pipeline & Orchestration (Prefect)
@@ -173,31 +200,3 @@ Run in order:
 
 ---
 
-## Project Structure
-
-```
-olist-data-pipeline/
-├── pipelines/
-│   ├── flow.py               # Prefect @flow — main orchestration
-│   └── tasks/
-│       ├── extract.py        # extract_csv()
-│       ├── cast.py           # cast_orders(), cast_order_items(), cast_payments()
-│       ├── dq_check.py       # dq_check_orders(), dq_check_order_items(), dq_check_payments()
-│       └── load.py           # load_to_bigquery()
-├── sql/
-│   ├── staging/              # stg_orders, stg_order_items, stg_payments
-│   ├── intermediate/         # int_orders_enriched
-│   └── mart/                 # mart_daily_revenue + 3 KPI views
-├── bi/
-│   ├── dashboard.pbix        # Power BI dashboard
-│   ├── dashboard.png         # Dashboard screenshot
-│   └── dax_measures.md       # DAX formulas + explanation
-├── requirements.txt
-└── README.md
-```
-
----
-
-## Data Source
-
-[Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) — Kaggle 
