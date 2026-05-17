@@ -22,33 +22,6 @@ Kaggle CSV Files
   DAX Measures → KPI Cards → Time-series Charts
 ```
 
-## Project Structure
-
-```
-olist-data-pipeline/
-├── pipelines/
-│   ├── flow.py               # Prefect @flow — main orchestration
-│   └── tasks/
-│       ├── extract.py        # extract_csv()
-│       ├── cast.py           # cast_orders(), cast_order_items(), cast_payments()
-│       ├── dq_check.py       # dq_check_orders(), dq_check_order_items(), dq_check_payments()
-│       └── load.py           # load_to_bigquery()
-├── sql/
-│   ├── staging/              # stg_orders, stg_order_items, stg_payments
-│   ├── intermediate/         # int_orders_enriched
-│   └── mart/                 # mart_daily_revenue + 3 KPI views
-├── bi/
-│   ├── dashboard.pbix        # Power BI dashboard
-│   ├── dashboard.png         # Dashboard screenshot
-│   └── dax_measures.md       # DAX formulas + explanation
-├── requirements.txt
-└── README.md
-```
-
-## Data Source
-
-[Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) — Kaggle 
-
 ---
 
 ## Part 1 — ETL Pipeline & Orchestration (Prefect)
@@ -200,3 +173,51 @@ Run in order:
 
 ---
 
+## Project Structure
+
+```
+olist-data-pipeline/
+├── .gitignore                # Excludes: __pycache__/, *.pyc, *.pyo,
+│                             #           *.json (service account keys),
+│                             #           .env (secrets), data/ (CSV files)
+├── requirements.txt          # Pinned Python dependencies
+├── README.md                 # This file
+├── pipelines/
+│   ├── flow.py               # Prefect @flow — main orchestration
+│   └── tasks/
+│       ├── extract.py        # extract_csv() — reads CSV into DataFrame
+│       ├── cast.py           # cast_orders/items/payments() — type casting
+│       ├── dq_check.py       # dq_check_*() — null + price validation
+│       └── load.py           # load_to_bigquery() — loads to BQ with WRITE_TRUNCATE
+├── sql/
+│   ├── staging/
+│   │   ├── stg_orders.sql
+│   │   ├── stg_order_items.sql
+│   │   └── stg_payments.sql
+│   ├── intermediate/
+│   │   └── int_orders_enriched.sql   # JOIN + delivery_lead_time_days + is_ontime
+│   └── mart/
+│       ├── mart_daily_revenue.sql    # Daily aggregated KPI table
+│       ├── vw_total_gmv.sql          # Monthly GMV view
+│       ├── vw_avg_aov.sql            # Monthly AOV view
+│       └── vw_ontime_delivery_rate.sql # Monthly on-time rate view
+└── bi/
+    ├── dashboard.pbix        # Power BI dashboard file
+    ├── dashboard.png         # Dashboard screenshot
+    └── dax_measures.md       # DAX formulas + explanation
+```
+
+### What `.gitignore` excludes and why
+
+| Pattern | Reason |
+|---------|--------|
+| `__pycache__/`, `*.pyc`, `*.pyo` | Python compiled files — auto-generated, not needed in repo |
+| `*.json` | Prevents accidentally committing GCP service account key files |
+| `.env` | Keeps secrets (project ID, credentials path) out of version control |
+| `data/` | CSV source files are large (~100MB) — link to Kaggle instead |
+
+---
+
+## Data Source
+
+[Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) — Kaggle (do not commit CSV files to repo)
