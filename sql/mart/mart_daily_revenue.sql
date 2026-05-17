@@ -5,7 +5,8 @@ SELECT
     COUNT(DISTINCT order_id) AS total_orders,
     SUM(price) AS gmv,
     SAFE_DIVIDE(SUM(price), COUNT(DISTINCT order_id)) AS avg_order_value,
-    AVG(is_ontime) AS ontime_rate
+    COUNTIF(is_ontime = 1)   AS ontime_orders,
+    COUNT(DISTINCT order_id) AS total_delivered_orders
 
 FROM `project-839c799e-2b34-4fae-814.olist_staging.int_orders_enriched`
 WHERE order_purchase_timestamp IS NOT NULL
