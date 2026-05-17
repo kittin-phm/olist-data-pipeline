@@ -1,4 +1,6 @@
 _pycache__/
 *.pyc
 *.pyo
+*.json
+.env
 data/
