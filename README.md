@@ -119,7 +119,7 @@ Key computed columns:
 
 **Stack**: Power BI · DAX
 
-### Dashboard (1 page)
+### Dashboard 
 
 Connected to BigQuery mart. Contains:
 - 📈 **Monthly GMV trend** — line/bar chart, Sep 2016 – Aug 2018
