@@ -1,21 +1,11 @@
-# DAX Measures Documentation
+# DAX Measures
 
 All measures are defined on the `mart_daily_revenue` table.
-Measures are used instead of calculated columns because they evaluate dynamically based on filter context (slicer, date filter), making them correct at any aggregation level.
+Measures are used instead of calculated columns because they evaluate dynamically based on filter context (slicer, date filter) — pulling values directly from the mart without storing redundant data row-by-row.
 
 ---
 
-## Total GMV
-
-```dax
-Total GMV = SUM(mart_daily_revenue[gmv])
-```
-
-Sums all daily GMV across the dataset. Result: **14.21M BRL**
-
----
-
-## Avg AOV (Average Order Value)
+## Measure 1 — AOV (Average Order Value)
 
 ```dax
 Avg AOV =
@@ -25,28 +15,32 @@ Avg AOV =
     )
 ```
 
-Weighted average — total revenue divided by total orders. Result: **142.89 BRL**
+**Why this formula:**
+- `DIVIDE()` is used instead of `/` to safely handle division by zero (returns BLANK instead of error)
+- Pulls `gmv` and `total_orders` directly from `mart_daily_revenue` — no intermediate calculation needed
+- Responds dynamically to the `year_month` slicer — filters automatically narrow the SUM range
 
-Using `DIVIDE()` instead of `/` to safely handle division by zero.
+**Result:** 142.89 BRL
 
 ---
 
-## Avg Ontime Rate %
+## Measure 2 — On-time Delivery Rate %
 
 ```dax
 Avg Ontime Rate % =
     DIVIDE(
-        SUMX(ALL(mart_daily_revenue), mart_daily_revenue[ontime_orders]),
-        SUMX(ALL(mart_daily_revenue), mart_daily_revenue[total_delivered_orders])
+        SUM(mart_daily_revenue[ontime_orders]),
+        SUM(mart_daily_revenue[total_delivered_orders])
     ) * 100
 ```
 
-Weighted on-time rate — total on-time deliveries divided by total delivered orders. Result: **92.15%**
+**Why this formula:**
+- Uses raw counts (`ontime_orders`, `total_delivered_orders`) stored in the mart — not a pre-averaged float
+- `SUM / SUM` gives a properly weighted rate across any date range selected by the slicer
+- Multiplied by 100 to display as percentage (e.g. 92.15 instead of 0.9215)
+- Responds to the `year_month` slicer — when a month is selected, only that month's counts are summed
 
-Verified against BigQuery: 106,004 on-time ÷ 115,038 delivered = 92.15%
+**Why not `AVERAGE(ontime_rate)`:**
+An earlier version stored `AVG(is_ontime)` as a pre-calculated float per day and used `AVERAGE()` in DAX. This inflated the result to **106%** because early months (Sep–Nov 2016) had very few orders but near-perfect delivery — small-volume days were weighted equally to high-volume days. Storing raw counts and using `DIVIDE(SUM, SUM)` fixes this.
 
-### Why not AVERAGE(ontime_rate)?
-
-An early version stored `AVG(is_ontime)` as a pre-calculated float per day, then used `AVERAGE()` in DAX. This inflated the result to **106%** because early months (Sep–Nov 2016) had very few orders but near-perfect delivery — small-volume days were weighted equally to high-volume days.
-
-The fix: store raw `ontime_orders` and `total_delivered_orders` counts in the mart, then use `DIVIDE(SUM(...), SUM(...))` for a properly weighted rate.
+**Result:** 92.15% — verified against BigQuery (106,004 on-time ÷ 115,038 delivered)
