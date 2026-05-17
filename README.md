@@ -1,76 +1,194 @@
-# Olist E-Commerce Data Pipeline
+# 🛒 Olist E-Commerce Data Pipeline
 
-## Project Structure
-- `pipelines/` - Prefect ETL pipeline (extract, cast, DQ check, load)
-- `sql/` - BigQuery SQL models (staging, intermediate, mart, KPI views)
-- `bi/` - Power BI dashboard and DAX measures
+> End-to-end data engineering project: ETL with Prefect → BigQuery DWH modeling → Power BI dashboard
+> **Dataset**: Brazilian E-Commerce (Olist) from Kaggle · ~100,000 orders · Sep 2016 – Aug 2018
 
-## Setup
+---
 
-### 1. Install dependencies
-Install all required Python packages with pinned versions:
+## 📁 Repository Structure
+
+```
+├── README.md
+├── requirements.txt
+├── .gitignore
+├── pipelines/
+│   ├── flow.py                  # @flow หลัก — orchestrates all tasks
+│   └── tasks/                   # extract, cast, dq_check, load
+├── sql/
+│   ├── staging/                 # stg_orders, stg_order_items, stg_payments
+│   ├── intermediate/            # int_orders_enriched
+│   └── mart/                    # mart_daily_revenue + 3 KPI views
+└── bi/
+    ├── dashboard.pbix
+    └── dax_measures.md
+```
+
+---
+
+## Part 1 — ETL Pipeline & Orchestration
+
+**Stack**: Python · Prefect v1 · BigQuery
+
+### What it does
+
+Ingests 3 CSV files from the Olist dataset into BigQuery staging tables using a Prefect-orchestrated pipeline with separate tasks for each concern:
+
+| Task | Responsibility |
+|---|---|
+| `extract` | Read CSVs from local path |
+| `cast` | Apply correct data types (no "everything is STRING") |
+| `dq_check` | Validate data quality before load |
+| `load` | Write to BigQuery staging tables |
+
+### Staging Tables Created
+
+- `stg_orders` — order-level data with proper timestamp types
+- `stg_order_items` — item-level with numeric price/freight
+- `stg_payments` — payment method and value per order
+
+### How to Run
+
+**1. Install dependencies**
 ```bash
 py -3.11 -m pip install -r requirements.txt
 ```
 
-### 2. Authenticate with Google Cloud
-Login with your Google account that has BigQuery access:
+**2. Authenticate with Google Cloud**
 ```bash
 gcloud auth application-default login
 ```
 
-### 3. Run the pipeline
-This will extract 3 CSVs, cast types, run DQ checks, and load to BigQuery:
+**3. Run the pipeline**
 ```bash
 py -3.11 pipelines/flow.py
 ```
 
-## BigQuery Dataset
-Project: `project-839c799e-2b34-4fae-814`  
-Dataset: `olist_staging`
+The flow will log row counts at each stage and skip (not cancel) any rows that fail DQ checks.
 
-Tables created after running the pipeline:
-- `stg_orders`, `stg_order_items`, `stg_payments` — raw staged data
-- `int_orders_enriched` — joined and enriched intermediate model
-- `mart_daily_revenue` — aggregated daily mart for BI consumption
+### Data Quality Checks (pre-load)
+
+| Check | Action on failure |
+|---|---|
+| `order_id` is null | Log warning + reject row |
+| `customer_id` is null | Log warning + reject row |
+| `price` ≤ 0 | Log warning + reject row |
+
+> ✅ DQ failures do **not** cancel the entire flow — bad rows are skipped and counted in the log.
+
+---
+
+## Part 2 — DWH Modeling in BigQuery
+
+**Stack**: SQL · Star Schema · BigQuery
+
+### Layer Architecture
+
+```
+[Staging] → [Intermediate] → [Mart] → [KPI Views]
+```
+
+**Why not query staging directly?**
+Staging holds raw data with no business logic. Separating layers means:
+- Staging changes don't break downstream queries
+- Business rules (join logic, metric definitions) live in one place
+- BI tool only reads from mart — fast, pre-aggregated
+
+### Intermediate Layer
+
+**`int_orders_enriched`** — joins orders + items + payments
+
+Key computed columns:
+- `delivery_lead_time_days` = `order_delivered_customer_date` − `order_purchase_timestamp`
+- `is_ontime` = 1 if delivered on or before `order_estimated_delivery_date`
+
+### Mart Layer
+
+**`mart_daily_revenue`** — daily aggregated GMV and order counts, consumed directly by Power BI
+
+### KPI Views
+
+| View | Definition |
+|---|---|
+| `vw_monthly_gmv` | SUM(price) grouped by year-month |
+| `vw_avg_aov` | GMV / COUNT(distinct order_id) per month |
+| `vw_ontime_rate` | % of delivered orders where `is_ontime = 1` |
+
+---
+
+## Part 3 — BI Dashboard & DAX
+
+**Stack**: Power BI · DAX
+
+### Dashboard (1 page)
+
+Connected to BigQuery mart. Contains:
+- 📈 **Monthly GMV trend** — line/bar chart, Sep 2016 – Aug 2018
+- 💳 **Avg AOV card** — overall average order value across full dataset
+- 🚚 **On-Time Delivery Rate card** — overall delivery performance
+- 📅 **Date slicer** — filters all visuals by year_month simultaneously
+
+### DAX Measures (`bi/dax_measures.md`)
+
+**Why use DAX measures instead of pulling from mart directly?**
+Calculated columns are static and stored in memory. DAX measures recalculate dynamically based on the active slicer context — essential for the date filter to affect AOV and On-Time Rate correctly.
+
+```dax
+-- Average Order Value
+AOV = DIVIDE([Total GMV], [Total Orders])
+
+-- On-Time Delivery Rate (responds to slicer)
+On-time Delivery Rate % =
+    DIVIDE(
+        CALCULATE([Total Orders], mart_daily_revenue[is_ontime] = 1),
+        [Total Orders]
+    )
+```
+
+### KPI Results
+
+| Metric | Value |
+|---|---|
+| Total GMV | 14.21M BRL |
+| Avg AOV | 130.72 BRL |
+| Avg On-Time Rate | ~85–90% per month |
+
+---
 
 ## Data Quality & Null Strategy
-- **product_category_name**: ~1,600 null rows retained as-is in staging; filtered downstream in intermediate layer to avoid losing order revenue data
-- **order_delivered_customer_date**: null for undelivered orders; excluded from on-time delivery calculation using `WHERE order_status = 'delivered'`
-- Null `order_id` and negative `price` rows are rejected in DQ check layer before loading to BigQuery
 
-## Layer Rationale
+Two null issues exist in this dataset by design — here's how each is handled:
 
-- **Staging**: Raw data loaded as-is from CSV with minimal type casting. No business logic applied.
-- **Intermediate**: Orders joined with items and payments. Enriched with `delivery_lead_time_days` and `is_ontime` flag for downstream aggregation.
-- **Mart**: Aggregated daily revenue table used directly by Power BI. Keeps BI queries simple and fast.
-- **KPI Views**: Three views on top of mart for Total GMV, Avg AOV, and On-Time Delivery Rate — matching dashboard metrics exactly.
+### 1. `product_category_name` (~1,600 null rows)
+
+**Why nulls exist**: Some products were not categorized in the source system.
+
+**Strategy**: Retained as-is in staging. Filtered out in the intermediate layer using `WHERE product_category_name IS NOT NULL` only when category-level analysis is needed. Orders themselves are **not dropped** — revenue data is preserved.
+
+### 2. `order_delivered_customer_date` (null for undelivered orders)
+
+**Why nulls exist**: Orders still in transit or cancelled have no delivery date.
+
+**Strategy**: Excluded from on-time delivery calculation by filtering `WHERE order_status = 'delivered'`. This ensures the metric only measures orders that actually completed delivery.
+
+---
+
+## BigQuery Project
+
+```
+Project : project-839c799e-2b34-4fae-814
+Dataset : olist_staging
+```
+
+---
 
 ## Data Source
-[Brazilian E-Commerce Dataset - Kaggle](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
+
+[Brazilian E-Commerce Public Dataset by Olist — Kaggle](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
+
+> CSV files are **not committed** to this repo. Download from Kaggle and place in the path referenced in `pipelines/tasks/extract.py`.
+
+---
 
 ## Dashboard Preview
+
 ![Dashboard](bi/dashboard.png)
-
-## Dashboard Description
-
-This Power BI dashboard analyzes **Olist Brazilian E-Commerce** transaction data 
-covering the period **September 2016 to August 2018** (~100,000 orders).
-
-### KPI Cards
-- **Total GMV**: 14.21M BRL — total gross merchandise value across all orders
-- **Avg AOV**: 130.72 BRL — average revenue per order
-- **Avg On-Time Rate**: 106.72% (monthly average of on-time delivery rate)
-
-### Charts
-- **Monthly Revenue (GMV)**: Revenue trend by month — shows peak in late 2017 and gradual decline toward mid-2018
-- **Average Order Value (AOV)**: AOV trend by month — relatively stable around 140-160 BRL throughout the period
-- **On-Time Delivery Rate %**: Consistent delivery performance (~85-90%) across all months with minor fluctuations
-
-### Slicer
-- **year_month filter**: Allows filtering all visuals by specific month for drill-down analysis
-
-### DAX Measures
-- `Total GMV` — SUM of monthly GMV
-- `Avg AOV` — AVERAGE of monthly AOV
-- `Avg Ontime Rate` — AVERAGE of monthly on-time delivery rate
