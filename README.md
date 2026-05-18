@@ -178,33 +178,33 @@ Run in order:
 ```
 olist-data-pipeline/
 ├── pipelines/
-│   ├── flow.py                       # Prefect @flow — main orchestration
+│   ├── flow.py                             # Prefect @flow — main orchestration
 │   └── tasks/
-│       ├── extract.py                # extract_csv() — reads CSV into DataFrame
-│       ├── cast.py                   # cast_orders/items/payments() — type casting
-│       ├── dq_check.py               # dq_check_*() — null + price validation
-│       └── load.py                   # load_to_bigquery() — loads to BQ with WRITE_TRUNCATE
+│       ├── extract.py                      # extract_csv() — reads CSV into DataFrame
+│       ├── cast.py                         # cast_orders/items/payments() — type casting
+│       ├── dq_check.py                     # dq_check_*() — null + price validation
+│       └── load.py                         # load_to_bigquery() — loads to BQ with WRITE_TRUNCATE
 ├── sql/
 │   ├── staging/
 │   │   ├── stg_orders.sql
 │   │   ├── stg_order_items.sql
 │   │   └── stg_payments.sql
 │   ├── intermediate/
-│   │   └── int_orders_enriched.sql   # JOIN + delivery_lead_time_days + is_ontime
+│   │   └── int_orders_enriched.sql         # JOIN + delivery_lead_time_days + is_ontime
 │   └── mart/
-│       ├── mart_daily_revenue.sql    # Daily aggregated KPI table
-│       ├── vw_total_gmv.sql          # Monthly GMV view
-│       ├── vw_avg_aov.sql            # Monthly AOV view
-│       └── vw_ontime_delivery_rate.sql # Monthly on-time rate view
+│       ├── mart_daily_revenue.sql          # Daily aggregated KPI table
+│       ├── vw_total_gmv.sql                # Monthly GMV view
+│       ├── vw_avg_aov.sql                  # Monthly AOV view
+│       └── vw_ontime_delivery_rate.sql     # Monthly on-time rate view
 ├── bi/
-│   ├── dashboard.pbix                # Power BI dashboard file
-│   ├── dashboard.png                 # Dashboard screenshot
-│   └── dax_measures.md               # DAX formulas + explanation
-├── README.md                         # This file
-├── requirements.txt                  # Pinned Python dependencies
-└── .gitignore                        # Excludes: __pycache__/, *.pyc, *.pyo,
-                                      # *.json (service account keys),
-                                      #  .env (secrets), data/ (CSV files)
+│   ├── dashboard.pbix                      # Power BI dashboard file
+│   ├── dashboard.png                       # Dashboard screenshot
+│   └── dax_measures.md                     # DAX formulas + explanation
+├── README.md                               # This file
+├── requirements.txt                        # Pinned Python dependencies
+└── .gitignore                              # Excludes: __pycache__/, *.pyc, *.pyo,
+                                            # *.json (service account keys),
+                                            #  .env (secrets), data/ (CSV files)
 
 ```
 
