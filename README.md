@@ -177,11 +177,6 @@ Run in order:
 
 ```
 olist-data-pipeline/
-├── .gitignore                # Excludes: __pycache__/, *.pyc, *.pyo,
-│                             #           *.json (service account keys),
-│                             #           .env (secrets), data/ (CSV files)
-├── requirements.txt          # Pinned Python dependencies
-├── README.md                 # This file
 ├── pipelines/
 │   ├── flow.py               # Prefect @flow — main orchestration
 │   └── tasks/
@@ -202,12 +197,18 @@ olist-data-pipeline/
 │       ├── vw_avg_aov.sql            # Monthly AOV view
 │       └── vw_ontime_delivery_rate.sql # Monthly on-time rate view
 └── bi/
-    ├── dashboard.pbix        # Power BI dashboard file
-    ├── dashboard.png         # Dashboard screenshot
-    └── dax_measures.md       # DAX formulas + explanation
+│   ├── dashboard.pbix        # Power BI dashboard file
+│   ├── dashboard.png         # Dashboard screenshot
+│   └── dax_measures.md       # DAX formulas + explanation
+├── README.md                 # This file
+├── requirements.txt          # Pinned Python dependencies
+├── .gitignore                # Excludes: __pycache__/, *.pyc, *.pyo,
+│                             #           *.json (service account keys),
+│                             #           .env (secrets), data/ (CSV files)
+
 ```
 
-### What `.gitignore` excludes and why
+### `.gitignore` excludes and why
 
 | Pattern | Reason |
 |---------|--------|
@@ -220,4 +221,4 @@ olist-data-pipeline/
 
 ## Data Source
 
-[Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) — Kaggle (do not commit CSV files to repo)
+[Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) — Kaggle 
